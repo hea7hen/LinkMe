@@ -1,0 +1,7 @@
+{
+  "name": "LinkMe",
+  "description": "Swiss-styled proximity networking app allowing users to discover connections and propose meetups based on location.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
