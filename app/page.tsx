@@ -125,6 +125,32 @@ export default function App() {
     };
   }, [currentUser]);
 
+  // Sync user to Supabase when they log in
+  useEffect(() => {
+    if (currentUser && !isDemoMode) {
+      const syncUser = async () => {
+        try {
+          const response = await fetch('/api/sync-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: currentUser.uid,
+              email: currentUser.email,
+              name: currentUser.displayName || currentUser.email?.split('@')[0],
+              avatar_url: currentUser.photoURL
+            }),
+          });
+          if (!response.ok) {
+            console.error('Failed to sync user to Supabase');
+          }
+        } catch (error) {
+          console.error('Error syncing user:', error);
+        }
+      };
+      syncUser();
+    }
+  }, [currentUser, isDemoMode]);
+
   // Load Data when User Ready
   useEffect(() => {
     if (currentUser) {

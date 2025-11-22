@@ -139,37 +139,93 @@ export const dataService = {
 
   // Get my profile
   async getMyProfile(userId: string, type: 'professional' | 'personal'): Promise<Profile | undefined> {
-    const db = getMockDB();
-    const p = db.profiles.find((p: Profile) => p.user_id === userId && p.profile_type === type);
-    // If not found (e.g. fresh google auth user), create default
-    if (!p) {
+    try {
+      // Try to fetch from Supabase API first
+      const response = await fetch(`/api/get-profile?userId=${userId}&profileType=${type}`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.data) {
+          return result.data;
+        }
+      }
+      
+      // If not found, create default profile in Supabase
+      const newProfile: Profile = {
+        id: `p_${userId}_${type}`,
+        user_id: userId,
+        profile_type: type,
+        headline: type === 'professional' ? 'New Professional' : 'New User',
+        bio: '',
+        visibility: 'nearby',
+        experience: [], education: [], skills: [], hobbies: [], prompts: [], open_to_work: false
+      };
+      
+      // Save to Supabase
+      await fetch('/api/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProfile),
+      });
+      
+      return newProfile;
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      // Fallback to mock data
+      const db = getMockDB();
+      const p = db.profiles.find((p: Profile) => p.user_id === userId && p.profile_type === type);
+      if (!p) {
         const newProfile: Profile = {
-            id: `p_${userId}_${type}`,
-            user_id: userId,
-            profile_type: type,
-            headline: type === 'professional' ? 'New Professional' : 'New User',
-            bio: '',
-            visibility: 'nearby',
-            experience: [], education: [], skills: [], hobbies: [], prompts: [], open_to_work: false
+          id: `p_${userId}_${type}`,
+          user_id: userId,
+          profile_type: type,
+          headline: type === 'professional' ? 'New Professional' : 'New User',
+          bio: '',
+          visibility: 'nearby',
+          experience: [], education: [], skills: [], hobbies: [], prompts: [], open_to_work: false
         };
         db.profiles.push(newProfile);
         updateMockDB(db);
         return newProfile;
+      }
+      return p;
     }
-    return Promise.resolve(p);
   },
 
   // Update profile
   async updateProfile(profile: Profile): Promise<void> {
-    const db = getMockDB();
-    const idx = db.profiles.findIndex((p: Profile) => p.id === profile.id);
-    if (idx !== -1) {
-      db.profiles[idx] = profile;
-    } else {
-      db.profiles.push(profile);
+    try {
+      // Save to Supabase API
+      const response = await fetch('/api/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to update profile in Supabase');
+        // Fallback to mock data
+        const db = getMockDB();
+        const idx = db.profiles.findIndex((p: Profile) => p.id === profile.id);
+        if (idx !== -1) {
+          db.profiles[idx] = profile;
+        } else {
+          db.profiles.push(profile);
+        }
+        updateMockDB(db);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      // Fallback to mock data
+      const db = getMockDB();
+      const idx = db.profiles.findIndex((p: Profile) => p.id === profile.id);
+      if (idx !== -1) {
+        db.profiles[idx] = profile;
+      } else {
+        db.profiles.push(profile);
+      }
+      updateMockDB(db);
     }
-    updateMockDB(db);
-    return Promise.resolve();
   },
 
   // Connections
