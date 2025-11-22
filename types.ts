@@ -7,6 +7,7 @@ export interface User {
   email: string;
   name: string;
   avatar_url?: string;
+  last_active?: string;
 }
 
 export interface Experience {
@@ -28,11 +29,22 @@ export interface Profile {
   profile_type: ProfileType;
   headline: string;
   bio: string;
+  visibility: Visibility;
+  
+  // Professional Enhanced
   experience: Experience[];
   education: Education[];
-  socials: { instagram?: string; linkedin?: string; website?: string };
+  skills: string[];
+  linkedin_url?: string;
+  github_url?: string;
+  open_to_work: boolean;
+  
+  // Personal Enhanced
   hobbies: string[];
-  visibility: Visibility;
+  instagram_handle?: string;
+  relationship_goal?: 'friends' | 'networking' | 'dating' | 'chat';
+  zodiac?: string;
+  prompts: { question: string; answer: string }[];
 }
 
 export interface Location {
@@ -60,7 +72,6 @@ export interface Connection {
   proposed_meetup?: MeetupProposal;
   created_at: string;
   updated_at: string;
-  // Joined fields for UI
   peer?: User;
   peer_profile?: Profile;
 }
@@ -74,9 +85,8 @@ export interface Message {
   read_at?: string;
 }
 
-// Combined type for dashboard display
 export interface NearbyUser extends User {
   profile: Profile;
   location: Location;
-  distance: number; // computed
+  distance: number;
 }
