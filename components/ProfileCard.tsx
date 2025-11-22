@@ -19,16 +19,21 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ user, onConnect, compa
         <div className="flex items-center gap-4">
            <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
              {user.avatar_url ? (
-               <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+               <img src={user.avatar_url} alt={user.profile.name || user.name} className="w-full h-full object-cover" />
              ) : (
                <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-lg">
-                 {user.name.charAt(0)}
+                 {(user.profile.name || user.name).charAt(0)}
                </div>
              )}
            </div>
            <div>
-             <h3 className="text-lg font-bold leading-tight text-textPrimary">{user.name}</h3>
-             <span className={`text-xs uppercase tracking-wider font-medium px-2 py-0.5 rounded-sm ${isProfessional ? 'bg-gray-200 text-gray-700' : 'bg-swissRed/10 text-swissRed'}`}>
+             <h3 className="text-lg font-bold leading-tight text-textPrimary">
+               {user.profile.name || user.name}
+               {user.profile.headline && (
+                 <span className="text-gray-500 font-normal"> • {user.profile.headline}</span>
+               )}
+             </h3>
+             <span className={`text-xs uppercase tracking-wider font-medium px-2 py-0.5 rounded-sm mt-1 inline-block ${isProfessional ? 'bg-gray-200 text-gray-700' : 'bg-swissRed/10 text-swissRed'}`}>
                {user.profile.profile_type}
              </span>
            </div>
@@ -44,10 +49,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ user, onConnect, compa
       {/* Body */}
       <div className="flex-grow space-y-4">
         <div>
-          <p className="text-sm font-medium text-gray-900 leading-relaxed">
-            {user.profile.headline}
-          </p>
-          <p className="text-sm text-gray-500 mt-2 leading-relaxed line-clamp-3">
+          <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">
             {user.profile.bio}
           </p>
         </div>

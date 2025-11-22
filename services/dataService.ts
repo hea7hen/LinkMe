@@ -85,8 +85,38 @@ const updateMockDB = (newData: any) => {
 // --- SERVICE METHODS ---
 
 export const dataService = {
-  // Fetch users nearby
-  async fetchNearby(lat: number, lng: number, radius: number): Promise<NearbyUser[]> {
+  // Fetch users nearby from Supabase API
+  async fetchNearby(lat: number, lng: number, radius: number, userId?: string): Promise<NearbyUser[]> {
+    try {
+      // Try to fetch from Supabase API first
+      const params = new URLSearchParams({
+        lat: lat.toString(),
+        lng: lng.toString(),
+        radius: radius.toString(),
+      });
+      if (userId) {
+        params.append('userId', userId);
+      }
+
+      const response = await fetch(`/api/fetch-nearby?${params.toString()}`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        return result.data || [];
+      } else {
+        // If API fails, fall back to mock data for demo
+        console.warn('API fetch failed, falling back to mock data');
+        return this.fetchNearbyMock(lat, lng, radius);
+      }
+    } catch (error) {
+      console.error('Error fetching nearby users:', error);
+      // Fall back to mock data for demo
+      return this.fetchNearbyMock(lat, lng, radius);
+    }
+  },
+
+  // Fallback mock implementation
+  async fetchNearbyMock(lat: number, lng: number, radius: number): Promise<NearbyUser[]> {
     const db = getMockDB();
     const nearby: NearbyUser[] = [];
     

@@ -21,7 +21,7 @@ export async function POST(req: Request) {
                     latLng: { latitude: lat, longitude: lng }
                 }
             }
-        }
+        } as any
       }
     });
 

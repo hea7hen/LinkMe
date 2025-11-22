@@ -3,16 +3,25 @@ import { Profile, ProfileType } from '../types';
 
 interface ProfileEditorProps {
   profile: Profile;
+  currentUserName?: string;
   onSave: (profile: Profile) => void;
+  onNameChange?: (name: string) => void;
   onTypeChange: (type: ProfileType) => void;
 }
 
-export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onSave, onTypeChange }) => {
+export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, currentUserName, onSave, onNameChange, onTypeChange }) => {
   const [formState, setFormState] = useState<Profile>(profile);
+  const [userName, setUserName] = useState<string>(currentUserName || '');
 
   useEffect(() => {
     setFormState(profile);
   }, [profile]);
+
+  useEffect(() => {
+    if (currentUserName) {
+      setUserName(currentUserName);
+    }
+  }, [currentUserName]);
 
   const handleChange = (field: keyof Profile, value: any) => {
     setFormState(prev => ({ ...prev, [field]: value } as Profile));
@@ -50,13 +59,18 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onSave, o
         </div>
 
         <div className="bg-surface border border-gray-200 rounded-xl p-4 md:p-8 shadow-sm space-y-8">
-            {/* Name Field */}
+            {/* Name Field - Shared across both profile types */}
             <div>
                 <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Name</label>
                 <input 
                     type="text"
-                    value={formState.name || ''}
-                    onChange={(e) => handleChange('name' as keyof Profile, e.target.value)}
+                    value={userName}
+                    onChange={(e) => {
+                      setUserName(e.target.value);
+                      if (onNameChange) {
+                        onNameChange(e.target.value);
+                      }
+                    }}
                     className="w-full bg-white border border-gray-200 rounded-lg p-3 text-sm outline-none focus:border-swissRed transition-colors"
                     placeholder="Your display name"
                 />

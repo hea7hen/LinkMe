@@ -20,7 +20,7 @@ export const ConnectionRequestModal: React.FC<Props> = ({ user, isOpen, onClose,
         <div className="bg-white w-full max-w-md rounded-t-2xl md:rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
             <div className="p-6 bg-surface border-b border-gray-100 flex justify-between items-center">
                 <div>
-                    <h3 className="text-lg font-bold leading-none">Connect with {user.name}</h3>
+                    <h3 className="text-lg font-bold leading-none">Connect with {user.profile.name || user.name}</h3>
                     <span className="text-xs text-gray-500 uppercase tracking-wide">{user.profile.profile_type} Profile</span>
                 </div>
                 <button onClick={onClose} className="text-gray-400 hover:text-black text-xl">×</button>
@@ -31,7 +31,7 @@ export const ConnectionRequestModal: React.FC<Props> = ({ user, isOpen, onClose,
                     <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Message</label>
                     <textarea 
                         className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:border-swissRed outline-none h-24 resize-none bg-gray-50 focus:bg-white transition-colors" 
-                        placeholder={`Hi ${user.name.split(' ')[0]}, I'd like to connect...`}
+                        placeholder={`Hi ${(user.profile.name || user.name).split(' ')[0]}, I'd like to connect...`}
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                     />

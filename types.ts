@@ -27,6 +27,7 @@ export interface Profile {
   id: string;
   user_id: string;
   profile_type: ProfileType;
+  name?: string; // Display name for this profile (falls back to User.name if not set)
   headline: string;
   bio: string;
   visibility: Visibility;

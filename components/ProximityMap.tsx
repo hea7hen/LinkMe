@@ -53,15 +53,18 @@ export const ProximityMap: React.FC<ProximityMapProps> = ({ users, radius, curre
             <div className="relative">
                <div className={`w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden ${user.profile.profile_type === 'professional' ? 'bg-gray-800' : 'bg-swissRed'}`}>
                    {user.avatar_url ? (
-                       <img src={user.avatar_url} className="w-full h-full object-cover opacity-90" alt="" />
+                       <img src={user.avatar_url} className="w-full h-full object-cover opacity-90" alt={user.profile.name || user.name} />
                    ) : (
-                       <span className="text-white text-xs flex items-center justify-center h-full font-bold">{user.name[0]}</span>
+                       <span className="text-white text-xs flex items-center justify-center h-full font-bold">{(user.profile.name || user.name)[0]}</span>
                    )}
                </div>
                {/* Tooltip */}
-               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block whitespace-nowrap">
+               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block whitespace-nowrap z-30">
                  <div className="bg-black text-white text-xs font-bold py-1 px-2 rounded-sm">
-                   {user.name}
+                   {user.profile.name || user.name}
+                   {user.profile.headline && (
+                     <span className="text-gray-300 font-normal"> • {user.profile.headline}</span>
+                   )}
                  </div>
                  <div className="w-2 h-2 bg-black transform rotate-45 absolute left-1/2 -translate-x-1/2 -bottom-1"></div>
                </div>

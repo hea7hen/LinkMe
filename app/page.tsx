@@ -51,20 +51,79 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  // Geolocation
+  // Geolocation: Request permission and update location to Supabase
   useEffect(() => {
-    if ("geolocation" in navigator) {
-        const watchId = navigator.geolocation.watchPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
-                setUserLocation({ lat: latitude, lng: longitude });
-            },
-            (error) => console.log("Geo error, using default NYC", error),
-            { enableHighAccuracy: true }
-        );
-        return () => navigator.geolocation.clearWatch(watchId);
+    if (!currentUser) return; // Only request location when user is authenticated
+    
+    if (!("geolocation" in navigator)) {
+      console.warn("Geolocation not supported by this browser");
+      return;
     }
-  }, []);
+
+    let watchId: number | null = null;
+    let lastUpdateTime = 0;
+    const UPDATE_THROTTLE_MS = 10000; // Update max once every 10 seconds
+
+    const updateLocationToSupabase = async (lat: number, lng: number) => {
+      const now = Date.now();
+      // Throttle updates to avoid too many API calls
+      if (now - lastUpdateTime < UPDATE_THROTTLE_MS) {
+        return;
+      }
+      lastUpdateTime = now;
+
+      try {
+        const userId = currentUser?.uid || 'me';
+        const response = await fetch('/api/update-location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, lat, lng }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          console.error('Failed to update location:', error);
+        }
+      } catch (error) {
+        console.error('Error updating location to Supabase:', error);
+      }
+    };
+
+    const handlePosition = (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      setUserLocation({ lat: latitude, lng: longitude });
+      // Update location in Supabase
+      updateLocationToSupabase(latitude, longitude);
+    };
+
+    const handleError = (error: GeolocationPositionError) => {
+      console.warn("Geolocation error:", error.message);
+      if (error.code === error.PERMISSION_DENIED) {
+        console.warn("Location permission denied. Using default location (NYC).");
+      } else if (error.code === error.POSITION_UNAVAILABLE) {
+        console.warn("Location unavailable. Using default location (NYC).");
+      } else if (error.code === error.TIMEOUT) {
+        console.warn("Location request timeout. Using default location (NYC).");
+      }
+    };
+
+    // Request permission and start watching position
+    watchId = navigator.geolocation.watchPosition(
+      handlePosition,
+      handleError,
+      { 
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000 // Accept cached position up to 1 minute old
+      }
+    );
+
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [currentUser]);
 
   // Load Data when User Ready
   useEffect(() => {
@@ -130,7 +189,8 @@ export default function App() {
 
   const loadNearby = async () => {
     setLoading(true);
-    const users = await dataService.fetchNearby(userLocation.lat, userLocation.lng, radius);
+    const userId = currentUser?.uid || undefined;
+    const users = await dataService.fetchNearby(userLocation.lat, userLocation.lng, radius, userId);
     setNearbyUsers(users);
     setLoading(false);
   };
@@ -160,6 +220,15 @@ export default function App() {
     await dataService.updateProfile(updated);
     setMyProfile(updated);
     alert("Profile Saved");
+  };
+
+  const handleNameChange = async (name: string) => {
+    // Update user name - this will be shared across both profile types
+    if (currentUser) {
+      // In a real app, you'd update the user in Supabase/Firebase
+      // For now, we'll just update the local state
+      setCurrentUser({ ...currentUser, displayName: name });
+    }
   };
 
   // --- RENDER HELPERS ---
@@ -400,7 +469,9 @@ export default function App() {
       {activeTab === 'profile' && myProfile && (
         <ProfileEditor 
             profile={myProfile} 
-            onSave={handleSaveProfile} 
+            currentUserName={currentUser?.displayName || currentUser?.name || ''}
+            onSave={handleSaveProfile}
+            onNameChange={handleNameChange}
             onTypeChange={(t) => setActiveProfileType(t)} 
         />
       )}
