@@ -58,8 +58,8 @@ export const ProximityMap: React.FC<ProximityMapProps> = ({ users, radius, curre
                        <span className="text-white text-xs flex items-center justify-center h-full font-bold">{(user.profile.name || user.name)[0]}</span>
                    )}
                </div>
-               {/* Tooltip */}
-               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block whitespace-nowrap z-30">
+               {/* Tooltip - Show on hover (desktop) or tap (mobile) */}
+               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block md:group-hover:block whitespace-nowrap z-30 pointer-events-none">
                  <div className="bg-black text-white text-xs font-bold py-1 px-2 rounded-sm">
                    {user.profile.name || user.name}
                    {user.profile.headline && (
@@ -67,6 +67,10 @@ export const ProximityMap: React.FC<ProximityMapProps> = ({ users, radius, curre
                    )}
                  </div>
                  <div className="w-2 h-2 bg-black transform rotate-45 absolute left-1/2 -translate-x-1/2 -bottom-1"></div>
+               </div>
+               {/* Mobile: Show name below on tap */}
+               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 md:hidden bg-black text-white text-xs font-bold py-1 px-2 rounded-sm whitespace-nowrap opacity-0 group-active:opacity-100 transition-opacity pointer-events-none z-30">
+                 {user.profile.name || user.name}
                </div>
             </div>
           </button>

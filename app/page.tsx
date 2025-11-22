@@ -57,12 +57,14 @@ export default function App() {
     
     if (!("geolocation" in navigator)) {
       console.warn("Geolocation not supported by this browser");
+      alert("Your browser doesn't support location services. Please use a modern browser.");
       return;
     }
 
     let watchId: number | null = null;
     let lastUpdateTime = 0;
     const UPDATE_THROTTLE_MS = 10000; // Update max once every 10 seconds
+    let hasShownPermissionAlert = false;
 
     const updateLocationToSupabase = async (lat: number, lng: number) => {
       const now = Date.now();
@@ -99,22 +101,44 @@ export default function App() {
     const handleError = (error: GeolocationPositionError) => {
       console.warn("Geolocation error:", error.message);
       if (error.code === error.PERMISSION_DENIED) {
+        if (!hasShownPermissionAlert) {
+          hasShownPermissionAlert = true;
+          alert("Location permission denied. Please enable location access in your browser settings to find nearby users. The app will use a default location for now.");
+        }
         console.warn("Location permission denied. Using default location (NYC).");
       } else if (error.code === error.POSITION_UNAVAILABLE) {
+        if (!hasShownPermissionAlert) {
+          hasShownPermissionAlert = true;
+          alert("Unable to get your location. Please check your GPS/network settings.");
+        }
         console.warn("Location unavailable. Using default location (NYC).");
       } else if (error.code === error.TIMEOUT) {
-        console.warn("Location request timeout. Using default location (NYC).");
+        // Don't show alert for timeout, just retry
+        console.warn("Location request timeout. Retrying...");
       }
     };
 
-    // Request permission and start watching position
-    watchId = navigator.geolocation.watchPosition(
-      handlePosition,
+    // For mobile: Use getCurrentPosition first to trigger permission prompt
+    // Then use watchPosition for continuous updates
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        handlePosition(position);
+        // After getting initial position, start watching
+        watchId = navigator.geolocation.watchPosition(
+          handlePosition,
+          handleError,
+          { 
+            enableHighAccuracy: true,
+            timeout: 15000, // Increased timeout for mobile
+            maximumAge: 30000 // Accept cached position up to 30 seconds old
+          }
+        );
+      },
       handleError,
       { 
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000 // Accept cached position up to 1 minute old
+        timeout: 15000, // Increased timeout for mobile
+        maximumAge: 0 // Don't use cached position for initial request
       }
     );
 
@@ -296,13 +320,13 @@ export default function App() {
   }
 
   const renderDashboard = () => (
-    <main className="flex-grow flex flex-col md:flex-row h-[calc(100vh-64px)] overflow-hidden animate-fade-in relative">
+    <main className="flex-grow flex flex-col md:flex-row h-[calc(100vh-64px)] md:h-[calc(100vh-64px)] overflow-hidden animate-fade-in relative">
       <div className="absolute z-40">
            <AiExplorer currentLat={userLocation.lat} currentLng={userLocation.lng} />
       </div>
 
       {/* Left: Map */}
-      <div className="w-full md:w-[65%] h-[40vh] md:h-full relative border-b md:border-b-0 md:border-r border-gray-200">
+      <div className="w-full md:w-[65%] h-[50vh] md:h-full relative border-b md:border-b-0 md:border-r border-gray-200">
           <ProximityMap 
             users={nearbyUsers} 
             radius={radius}
@@ -310,8 +334,8 @@ export default function App() {
             onUserSelect={(u) => { setSelectedUser(u); if(window.innerWidth < 768) document.getElementById('list-view')?.scrollIntoView({behavior:'smooth'}); }}
           />
           
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur shadow-xl border border-gray-200 px-6 py-4 rounded-full flex items-center gap-4 z-30 w-[90%] max-w-md transition-all hover:scale-105">
-            <span className="text-xs font-bold uppercase text-gray-500 whitespace-nowrap">Radius</span>
+          <div className="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 bg-white/95 backdrop-blur shadow-xl border border-gray-200 px-4 md:px-6 py-3 md:py-4 rounded-full flex items-center gap-2 md:gap-4 z-30 w-[95%] md:w-[90%] max-w-md">
+            <span className="text-xs font-bold uppercase text-gray-500 whitespace-nowrap hidden sm:inline">Radius</span>
             <input 
               type="range" 
               min="500" 
@@ -319,14 +343,15 @@ export default function App() {
               step="250" 
               value={radius}
               onChange={(e) => setRadius(Number(e.target.value))}
-              className="w-full accent-swissRed cursor-pointer h-1.5 bg-gray-200 rounded-lg appearance-none"
+              className="w-full accent-swissRed cursor-pointer h-2 md:h-1.5 bg-gray-200 rounded-lg appearance-none touch-none"
+              style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
             />
-            <span className="text-xs font-bold tabular-nums w-12 text-right text-swissRed">{radius}m</span>
+            <span className="text-xs font-bold tabular-nums w-12 text-right text-swissRed flex-shrink-0">{radius}m</span>
           </div>
       </div>
 
       {/* Right: List / Detail */}
-      <div id="list-view" className="w-full md:w-[35%] h-full overflow-y-auto bg-white relative z-10 scroll-smooth">
+      <div id="list-view" className="w-full md:w-[35%] h-[calc(50vh)] md:h-full overflow-y-auto bg-white relative z-10 scroll-smooth">
         {loading && nearbyUsers.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center bg-white z-20">
                 <div className="w-8 h-8 border-2 border-swissRed border-t-transparent rounded-full animate-spin"></div>

@@ -1,4 +1,5 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
   "/api/fetch-nearby/route": "app/api/fetch-nearby/route.js",
   "/api/sync-user/route": "app/api/sync-user/route.js",
   "/api/get-profile/route": "app/api/get-profile/route.js",
