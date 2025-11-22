@@ -48,6 +48,7 @@ export async function POST(request: Request) {
       const { error: proError } = await supabase
         .from('profiles')
         .insert({
+          id: `p_${userId}_professional`, // Generate ID
           user_id: userId,
           profile_type: 'professional',
           headline: 'New Professional',
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
       const { error: persError } = await supabase
         .from('profiles')
         .insert({
+          id: `p_${userId}_personal`, // Generate ID
           user_id: userId,
           profile_type: 'personal',
           headline: 'New User',

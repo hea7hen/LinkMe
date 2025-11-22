@@ -20,6 +20,12 @@ export async function POST(request: Request) {
     if (!profile.user_id || !profile.profile_type) {
       return NextResponse.json({ error: 'user_id and profile_type are required' }, { status: 400 });
     }
+
+    // Ensure ID is set
+    if (!profile.id) {
+      profile.id = `p_${profile.user_id}_${profile.profile_type}`;
+    }
+
     // Upsert profile
     const { error } = await supabase
       .from('profiles')

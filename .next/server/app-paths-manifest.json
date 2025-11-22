@@ -1,3 +1,7 @@
 {
+  "/api/fetch-nearby/route": "app/api/fetch-nearby/route.js",
+  "/api/sync-user/route": "app/api/sync-user/route.js",
+  "/api/get-profile/route": "app/api/get-profile/route.js",
+  "/api/update-location/route": "app/api/update-location/route.js",
   "/page": "app/page.js"
 }

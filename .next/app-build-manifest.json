@@ -1,5 +1,15 @@
 {
   "pages": {
+    "/api/update-location/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/update-location/route.js"
+    ],
+    "/api/fetch-nearby/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/fetch-nearby/route.js"
+    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -11,25 +21,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/api/fetch-nearby/route": [
+    "/api/get-profile/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/fetch-nearby/route.js"
-    ],
-    "/api/update-location/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/update-location/route.js"
+      "static/chunks/app/api/get-profile/route.js"
     ],
     "/api/sync-user/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/sync-user/route.js"
-    ],
-    "/api/get-profile/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/get-profile/route.js"
     ],
     "/api/update-profile/route": [
       "static/chunks/webpack.js",
