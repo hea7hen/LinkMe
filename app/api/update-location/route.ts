@@ -1,26 +1,55 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-// Note: In a real Next.js app, this runs server-side
 export async function POST(request: Request) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  const { userId, lat, lng } = await request.json();
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase environment variables');
+      return NextResponse.json({ 
+        error: 'Server configuration error: Missing Supabase credentials' 
+      }, { status: 500 });
+    }
 
-  // Upsert location
-  const { error } = await supabase
-    .from('locations')
-    .upsert({ 
-      user_id: userId, 
-      latitude: lat, 
-      longitude: lng,
-      updated_at: new Date().toISOString() 
-    }, { onConflict: 'user_id' });
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const { userId, lat, lng } = await request.json();
 
-  return NextResponse.json({ success: true });
+    if (!userId || lat === undefined || lng === undefined) {
+      return NextResponse.json({ 
+        error: 'userId, lat, and lng are required' 
+      }, { status: 400 });
+    }
+
+    // FIX: Changed 'latitude' -> 'lat' and 'longitude' -> 'lng'
+    const { data, error } = await supabase
+      .from('locations')
+      .upsert({ 
+        user_id: userId, 
+        lat: lat,   // <--- MATCHES DATABASE COLUMN
+        lng: lng,   // <--- MATCHES DATABASE COLUMN
+        updated_at: new Date().toISOString() 
+      }, { 
+        onConflict: 'user_id',
+        ignoreDuplicates: false
+      });
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json({ 
+        error: error.message,
+        details: error.details,
+        hint: error.hint
+      }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (error: any) {
+    console.error('Unexpected error in update-location:', error);
+    return NextResponse.json({ 
+      error: error.message || 'Internal server error' 
+    }, { status: 500 });
+  }
 }
