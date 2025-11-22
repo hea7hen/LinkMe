@@ -15,7 +15,7 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onSave, o
   }, [profile]);
 
   const handleChange = (field: keyof Profile, value: any) => {
-    setFormState(prev => ({ ...prev, [field]: value }));
+    setFormState(prev => ({ ...prev, [field]: value } as Profile));
   };
 
   const handleExperienceChange = (index: number, field: string, value: string) => {
@@ -50,6 +50,18 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onSave, o
         </div>
 
         <div className="bg-surface border border-gray-200 rounded-xl p-4 md:p-8 shadow-sm space-y-8">
+            {/* Name Field */}
+            <div>
+                <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Name</label>
+                <input 
+                    type="text"
+                    value={formState.name || ''}
+                    onChange={(e) => handleChange('name' as keyof Profile, e.target.value)}
+                    className="w-full bg-white border border-gray-200 rounded-lg p-3 text-sm outline-none focus:border-swissRed transition-colors"
+                    placeholder="Your display name"
+                />
+            </div>
+
             {/* Header Config */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -65,7 +77,7 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ profile, onSave, o
                     </select>
                 </div>
                  <div>
-                    <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Headline</label>
+                    <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Headline / Occupation</label>
                     <input 
                         type="text"
                         value={formState.headline}
