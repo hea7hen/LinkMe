@@ -12,6 +12,17 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ connection, currentUserI
   const [input, setInput] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
   const [isSending, setIsSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Load messages
   useEffect(() => {
@@ -101,11 +112,43 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ connection, currentUserI
       </div>
 
       {/* Input */}
+      {/* Typing Indicator */}
+      {/* Note: In production, this would use Supabase Realtime to detect when the other person is typing */}
+      {isTyping && (
+        <div className="px-6 py-2 bg-white border-t border-gray-100 animate-fade-in">
+          <div className="flex items-center gap-2 text-gray-400 text-xs">
+            <div className="flex gap-1">
+              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            </div>
+            <span className="font-medium uppercase tracking-wide">{connection.peer?.name || 'Someone'} is typing...</span>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="p-4 border-t border-gray-100 flex gap-3 bg-white">
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value);
+            // Show typing indicator when user types
+            setIsTyping(true);
+            if (typingTimeoutRef.current) {
+              clearTimeout(typingTimeoutRef.current);
+            }
+            typingTimeoutRef.current = setTimeout(() => {
+              setIsTyping(false);
+            }, 2000); // Hide after 2 seconds of no typing
+          }}
+          onBlur={() => {
+            // Hide typing indicator when input loses focus
+            if (typingTimeoutRef.current) {
+              clearTimeout(typingTimeoutRef.current);
+            }
+            setIsTyping(false);
+          }}
           placeholder="Type a message..."
           className="flex-grow bg-surface border-none rounded-lg px-4 py-3 text-sm focus:ring-1 focus:ring-swissRed outline-none transition-all"
         />

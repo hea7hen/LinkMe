@@ -37,6 +37,10 @@ export default function App() {
   const [selectedUser, setSelectedUser] = useState<NearbyUser | null>(null);
   const [selectedConnection, setSelectedConnection] = useState<Connection | null>(null);
   const [isConnectModalOpen, setConnectModalOpen] = useState(false);
+  
+  // Notification State
+  const [notification, setNotification] = useState<{ message: string; connectionId?: string } | null>(null);
+  const [lastConnectionCheck, setLastConnectionCheck] = useState<Date>(new Date());
 
   // --- INITIALIZATION ---
 
@@ -248,7 +252,31 @@ export default function App() {
   const loadConnections = async () => {
     const userId = currentUser?.uid || 'me';
     const conns = await dataService.getConnections(userId);
+    
+    // Check if any pending connections were accepted
+    const previousConnections = connections;
+    const newlyAccepted = conns.filter((newConn: Connection) => {
+      const oldConn = previousConnections.find((c: Connection) => c.id === newConn.id);
+      return oldConn && oldConn.status === 'pending' && newConn.status === 'accepted';
+    });
+    
+    if (newlyAccepted.length > 0) {
+      const acceptedConn = newlyAccepted[0];
+      setNotification({
+        message: `${acceptedConn.peer?.name || 'Someone'} accepted your connection request!`,
+        connectionId: acceptedConn.id
+      });
+      
+      // Auto-switch to connections tab and select the accepted connection
+      setActiveTab('connections');
+      setSelectedConnection(acceptedConn);
+      
+      // Auto-dismiss notification after 5 seconds
+      setTimeout(() => setNotification(null), 5000);
+    }
+    
     setConnections(conns);
+    setLastConnectionCheck(new Date());
   };
 
   const handleSendConnection = async (message: string, meetupProposal?: any) => {
@@ -474,13 +502,25 @@ export default function App() {
                         {selectedConnection.status === 'pending' && (
                              <div className="flex gap-4">
                                 <button 
-                                    onClick={() => { dataService.updateConnectionStatus(selectedConnection.id, 'accepted'); loadConnections(); }}
+                                    onClick={async () => { 
+                                      await dataService.updateConnectionStatus(selectedConnection.id, 'accepted'); 
+                                      await loadConnections();
+                                      // Show notification to the person who sent the request
+                                      setNotification({
+                                        message: `You accepted ${selectedConnection.peer?.name || 'their'} connection request!`,
+                                        connectionId: selectedConnection.id
+                                      });
+                                      setTimeout(() => setNotification(null), 3000);
+                                    }}
                                     className="px-8 py-3 bg-swissRed text-white font-bold uppercase text-sm tracking-widest rounded-lg hover:bg-red-700 transition shadow-lg shadow-red-100"
                                 >
                                     Accept
                                 </button>
                                 <button 
-                                    onClick={() => { dataService.updateConnectionStatus(selectedConnection.id, 'rejected'); loadConnections(); }}
+                                    onClick={async () => { 
+                                      await dataService.updateConnectionStatus(selectedConnection.id, 'rejected'); 
+                                      await loadConnections();
+                                    }}
                                     className="px-8 py-3 bg-white border border-gray-200 text-gray-500 font-bold uppercase text-sm tracking-widest rounded-lg hover:bg-gray-50 transition"
                                 >
                                     Reject
@@ -502,6 +542,43 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans text-textPrimary">
+      {/* Notification Popup */}
+      {notification && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-slide-down">
+          <div className="bg-white border-2 border-swissRed shadow-2xl rounded-lg px-6 py-4 flex items-center gap-4 min-w-[300px] max-w-md">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+            <div className="flex-grow">
+              <p className="font-bold text-sm text-gray-900">{notification.message}</p>
+              {notification.connectionId && (
+                <button
+                  onClick={() => {
+                    const conn = connections.find((c: Connection) => c.id === notification.connectionId);
+                    if (conn) {
+                      setActiveTab('connections');
+                      setSelectedConnection(conn);
+                    }
+                    setNotification(null);
+                  }}
+                  className="text-xs text-swissRed font-bold uppercase tracking-wide mt-1 hover:underline"
+                >
+                  Open Chat →
+                </button>
+              )}
+            </div>
+            <button
+              onClick={() => setNotification(null)}
+              className="text-gray-400 hover:text-gray-600 text-xl flex-shrink-0"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Banner for Demo Mode */}
       {isDemoMode && (
           <div className="bg-black text-white text-[10px] uppercase font-bold tracking-widest text-center py-1">

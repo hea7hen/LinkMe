@@ -36,6 +36,21 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/update-profile/route.js"
     ],
+    "/api/get-connections/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/get-connections/route.js"
+    ],
+    "/api/send-connection/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/send-connection/route.js"
+    ],
+    "/api/update-connection-status/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/update-connection-status/route.js"
+    ],
     "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",

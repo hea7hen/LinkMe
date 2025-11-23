@@ -230,42 +230,119 @@ export const dataService = {
 
   // Connections
   async getConnections(userId: string): Promise<Connection[]> {
-    const db = getMockDB();
-    const connections = db.connections.filter((c: Connection) => c.from_user === userId || c.to_user === userId);
-    
-    // Hydrate with peer info
-    const hydrated = connections.map((c: Connection) => {
-      const peerId = c.from_user === userId ? c.to_user : c.from_user;
-      const peer = db.users.find((u: User) => u.id === peerId) || { id: peerId, name: 'Unknown', email: '' };
-      const peerProfile = db.profiles.find((p: Profile) => p.user_id === peerId && p.profile_type === c.profile_type);
-      return { ...c, peer, peer_profile: peerProfile };
-    });
-    
-    return Promise.resolve(hydrated);
+    try {
+      // Fetch from Supabase API
+      const response = await fetch(`/api/get-connections?userId=${userId}`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        return result.data || [];
+      }
+      
+      // Fallback to mock data
+      const db = getMockDB();
+      const connections = db.connections.filter((c: Connection) => c.from_user === userId || c.to_user === userId);
+      
+      // Hydrate with peer info
+      const hydrated = connections.map((c: Connection) => {
+        const peerId = c.from_user === userId ? c.to_user : c.from_user;
+        const peer = db.users.find((u: User) => u.id === peerId) || { id: peerId, name: 'Unknown', email: '' };
+        const peerProfile = db.profiles.find((p: Profile) => p.user_id === peerId && p.profile_type === c.profile_type);
+        return { ...c, peer, peer_profile: peerProfile };
+      });
+      
+      return hydrated;
+    } catch (error) {
+      console.error('Error fetching connections:', error);
+      // Fallback to mock data
+      const db = getMockDB();
+      const connections = db.connections.filter((c: Connection) => c.from_user === userId || c.to_user === userId);
+      
+      const hydrated = connections.map((c: Connection) => {
+        const peerId = c.from_user === userId ? c.to_user : c.from_user;
+        const peer = db.users.find((u: User) => u.id === peerId) || { id: peerId, name: 'Unknown', email: '' };
+        const peerProfile = db.profiles.find((p: Profile) => p.user_id === peerId && p.profile_type === c.profile_type);
+        return { ...c, peer, peer_profile: peerProfile };
+      });
+      
+      return hydrated;
+    }
   },
 
   async sendConnectionRequest(conn: Partial<Connection>): Promise<void> {
-    const db = getMockDB();
-    const newConn = {
+    try {
+      // Save to Supabase API
+      const response = await fetch('/api/send-connection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...conn,
+          id: conn.id || crypto.randomUUID(),
+          status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to save connection to Supabase');
+        // Fallback to mock data
+        const db = getMockDB();
+        const newConn = {
+          ...conn,
+          id: crypto.randomUUID(),
+          status: 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        db.connections.push(newConn);
+        updateMockDB(db);
+      }
+    } catch (error) {
+      console.error('Error sending connection request:', error);
+      // Fallback to mock data
+      const db = getMockDB();
+      const newConn = {
         ...conn,
         id: crypto.randomUUID(),
         status: 'pending',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-    };
-    db.connections.push(newConn);
-    updateMockDB(db);
-    return Promise.resolve();
+      };
+      db.connections.push(newConn);
+      updateMockDB(db);
+    }
   },
 
   async updateConnectionStatus(connId: string, status: 'accepted' | 'rejected'): Promise<void> {
-    const db = getMockDB();
-    const idx = db.connections.findIndex((c: Connection) => c.id === connId);
-    if (idx !== -1) {
+    try {
+      // Update in Supabase API
+      const response = await fetch('/api/update-connection-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connectionId: connId, status }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to update connection status in Supabase');
+        // Fallback to mock data
+        const db = getMockDB();
+        const idx = db.connections.findIndex((c: Connection) => c.id === connId);
+        if (idx !== -1) {
+          db.connections[idx].status = status;
+          updateMockDB(db);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating connection status:', error);
+      // Fallback to mock data
+      const db = getMockDB();
+      const idx = db.connections.findIndex((c: Connection) => c.id === connId);
+      if (idx !== -1) {
         db.connections[idx].status = status;
         updateMockDB(db);
+      }
     }
-    return Promise.resolve();
   },
 
   // Messages

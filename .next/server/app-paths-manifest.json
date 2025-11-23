@@ -1,8 +1,11 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
+  "/api/update-location/route": "app/api/update-location/route.js",
   "/api/fetch-nearby/route": "app/api/fetch-nearby/route.js",
   "/api/sync-user/route": "app/api/sync-user/route.js",
+  "/api/send-connection/route": "app/api/send-connection/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/get-connections/route": "app/api/get-connections/route.js",
   "/api/get-profile/route": "app/api/get-profile/route.js",
-  "/api/update-location/route": "app/api/update-location/route.js",
+  "/api/update-connection-status/route": "app/api/update-connection-status/route.js",
   "/page": "app/page.js"
 }
